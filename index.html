@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2heartpillows | Von Frauen für Frauen</title>
+  <meta name="description" content="Herzkissen nach Brustkrebs: von Frauen für Frauen. Jedes Stück Stoff schenkt Hoffnung, Solidarität und Mitgefühl.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav">
+      <a class="brand" href="#top">2heartpillows</a>
+      <div class="nav-links">
+        <a href="#mission">Mission</a>
+        <a href="#galerie">Galerie</a>
+        <a href="#instagram">Instagram</a>
+        <a href="#nft">NFT</a>
+      </div>
+    </nav>
+    <div class="hero-content" id="top">
+      <p class="eyebrow">Von Frauen für Frauen</p>
+      <h1>Jedes Herzkissen ist ein Zeichen für Solidarität und Mitgefühl.</h1>
+      <p>
+        Dieses Projekt unterstützt Frauen nach Brustkrebs. Die Kissen werden gespendet.
+        Jedes Stück Stoff schenkt Hoffnung.
+      </p>
+      <div class="hero-actions">
+        <a class="btn primary" href="assets/legal/Haftungsausschluss_2HeartPillows.pdf" target="_blank" rel="noopener noreferrer">Haftungsausschluss (PDF)</a>
+        <a class="btn secondary" href="https://www.instagram.com/2heartpillows/" target="_blank" rel="noopener noreferrer">Instagram @2heartpillows</a>
+      </div>
+      <p class="mini-note">
+        Neuer lokaler PDF-Link. Falls die Datei noch nicht hochgeladen ist, nutze vorerst den alten Link:
+        <a href="http://www.2heartpillows.de/narges/Haftungsausschluss_2HeartPillows.pdf" target="_blank" rel="noopener noreferrer">bisheriger Haftungsausschluss</a>.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <section class="section mission" id="mission">
+      <h2>Unsere Mission</h2>
+      <p>
+        Ich habe privat Herzkissen genäht und den größten Teil bereits verteilt.
+        Ich nähe keine weiteren Kissen mehr, aber die Idee lebt weiter:
+        Unterstützung von Frauen für Frauen, getragen von Herz, Zeit und Spenden.
+      </p>
+      <p>
+        Diese Website hält die Geschichte und den Gedanken dahinter lebendig und macht die Wirkung sichtbar.
+      </p>
+    </section>
+
+    <section class="section galerie" id="galerie">
+      <div class="section-head">
+        <h2>Galerie</h2>
+        <p>Bilder aus dem Projekt.</p>
+      </div>
+      <div class="gallery-grid">
+        <figure>
+          <img src="assets/images/placeholder-1.svg" alt="Herzkissen in Stoffmustern">
+        </figure>
+        <figure>
+          <img src="assets/images/placeholder-2.svg" alt="Gespendete Herzkissen">
+        </figure>
+        <figure>
+          <img src="assets/images/placeholder-3.svg" alt="Detailaufnahme eines Herzkissens">
+        </figure>
+      </div>
+      <div class="upload-box">
+        <h3>Bilder hochladen</h3>
+        <p>
+          Hier kannst du Bilder direkt auswählen. Sie erscheinen sofort in der Galerie und werden lokal im Browser gespeichert.
+        </p>
+        <label class="upload-label" for="image-upload">Bilder auswählen (mehrere möglich)</label>
+        <input id="image-upload" type="file" accept="image/*" multiple>
+        <button id="clear-uploads" class="btn secondary" type="button">Hochgeladene Bilder löschen</button>
+        <p class="note">
+          Für dauerhafte Website-Bilder: Dateien in <code>assets/images/</code> ablegen und im HTML eintragen.
+        </p>
+      </div>
+    </section>
+
+    <section class="section instagram" id="instagram">
+      <div class="section-head">
+        <h2>Instagram</h2>
+        <p>@2heartpillows</p>
+      </div>
+      <p>
+        Für aktuelle Fotos und Einblicke besuche die Instagram-Seite. Ohne API zeigen wir hier bewusst eine direkte,
+        stabile Verlinkung statt eines fehleranfälligen Live-Embeds.
+      </p>
+      <a class="btn primary" href="https://www.instagram.com/2heartpillows/" target="_blank" rel="noopener noreferrer">Zum Instagram-Profil</a>
+    </section>
+
+    <section class="section nft" id="nft">
+      <h2>NFT Bereich</h2>
+      <p>
+        Ziel: Jede Kissenbesitzerin erhält ein NFT als digitale Erinnerung. Dieser Bereich ist als Start für Erstellung
+        und spätere Ausgabe vorbereitet.
+      </p>
+      <div class="nft-grid">
+        <div class="card">
+          <h3>1. NFT-Motive erstellen</h3>
+          <p>Die Herzkissen-Motive werden als digitale Kollektion vorbereitet.</p>
+        </div>
+        <div class="card">
+          <h3>2. Wallet verknüpfen</h3>
+          <p>Optionaler Wallet-Login für spätere Ausgabe.</p>
+        </div>
+        <div class="card">
+          <h3>3. Claim für Besitzerinnen</h3>
+          <p>NFT-Übergabe über einen geschützten Claim-Code.</p>
+        </div>
+      </div>
+      <form class="claim-form">
+        <h3>Interesse vormerken</h3>
+        <label for="claim-name">Name</label>
+        <input id="claim-name" type="text" placeholder="Dein Name">
+        <label for="claim-contact">Kontakt (E-Mail oder Instagram)</label>
+        <input id="claim-contact" type="text" placeholder="beispiel@email.de oder @name">
+        <button type="button" class="btn primary">Vormerken (Demo)</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2heartpillows | Für Hoffnung, Solidarität und Mitgefühl.</p>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>

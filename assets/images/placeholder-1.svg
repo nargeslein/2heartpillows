@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" role="img" aria-label="Herzkissen Platzhalter 1">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8d9d1"/>
+      <stop offset="100%" stop-color="#fff5f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#g1)"/>
+  <path d="M400 580c-95-65-220-145-220-270 0-84 62-150 145-150 45 0 82 18 109 54 27-36 64-54 109-54 83 0 145 66 145 150 0 125-125 205-220 270l-34 24-34-24z" fill="#c1544b"/>
+  <text x="50%" y="88%" text-anchor="middle" font-size="42" font-family="Arial, sans-serif" fill="#6e5d57">2heartpillows</text>
+</svg>
