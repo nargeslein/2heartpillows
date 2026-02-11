@@ -6,6 +6,8 @@ const storyImage = document.getElementById("story-image");
 const storyTitle = document.getElementById("story-title");
 const storyText = document.getElementById("story-text");
 const galleryImages = document.querySelectorAll(".gallery-grid img[data-story-id]");
+const navToggle = document.getElementById("nav-toggle");
+const navLinks = document.querySelector(".nav-links");
 const contactForm = document.getElementById("contact-form");
 const turnstileContainer = document.getElementById("turnstile-container");
 const contactStatus = document.getElementById("contact-status");
@@ -296,6 +298,27 @@ function applyLanguage(lang) {
 if (langDeBtn && langEnBtn) {
   langDeBtn.addEventListener("click", () => applyLanguage("de"));
   langEnBtn.addEventListener("click", () => applyLanguage("en"));
+}
+
+if (navToggle && navLinks) {
+  navToggle.addEventListener("click", () => {
+    document.body.classList.toggle("nav-open");
+    navToggle.setAttribute("aria-expanded", document.body.classList.contains("nav-open") ? "true" : "false");
+  });
+
+  navLinks.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      document.body.classList.remove("nav-open");
+      navToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 420) {
+      document.body.classList.remove("nav-open");
+      navToggle.setAttribute("aria-expanded", "false");
+    }
+  });
 }
 
 galleryImages.forEach((imageElement) => {
