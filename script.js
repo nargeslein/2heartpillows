@@ -16,7 +16,6 @@ const walletSwitchAmoyBtn = document.getElementById("wallet-switch-amoy");
 const walletStatus = document.getElementById("wallet-status");
 const walletNftGrid = document.getElementById("wallet-nft-grid");
 const walletNftInfo = document.getElementById("wallet-nft-info");
-const walletCard = document.querySelector(".wallet-card");
 const langKey = "twoheartpillows_lang_v1";
 let currentLang = "de";
 let activeStoryId = "";
@@ -46,15 +45,6 @@ function getReservoirBaseUrl(chainIdHex) {
   if (chainIdHex === "0x1") return "https://api.reservoir.tools";
   if (chainIdHex === "0x89") return "https://api-polygon.reservoir.tools";
   return "";
-}
-
-function getAmoyAlchemyKey() {
-  const fromConfig = window.APP_CONFIG && typeof window.APP_CONFIG.AMOY_ALCHEMY_KEY === "string"
-    ? window.APP_CONFIG.AMOY_ALCHEMY_KEY.trim()
-    : "";
-  if (fromConfig) return fromConfig;
-  if (!walletCard) return "";
-  return (walletCard.getAttribute("data-amoy-alchemy-key") || "").trim();
 }
 
 function normalizeAlchemyNfts(items) {
@@ -134,12 +124,7 @@ async function loadWalletNfts(account, chainIdHex) {
     let tokens = [];
 
     if (chainIdHex === polygonAmoyHex) {
-      const alchemyKey = getAmoyAlchemyKey();
-      if (!alchemyKey) {
-        clearWalletNfts(t("walletAmoyKeyMissing"));
-        return;
-      }
-      const amoyUrl = `https://polygon-amoy.g.alchemy.com/nft/v3/${alchemyKey}/getNFTsForOwner?owner=${account}&withMetadata=true`;
+      const amoyUrl = `/api/nfts?owner=${encodeURIComponent(account)}`;
       const amoyResponse = await fetch(amoyUrl);
       if (!amoyResponse.ok) throw new Error("Amoy fetch failed");
       const amoyData = await amoyResponse.json();
@@ -312,7 +297,6 @@ const translations = {
     walletNftsPrompt: "Verbinde zuerst deine Wallet, um NFTs zu laden.",
     walletNftsLoading: "Lade Wallet NFTs...",
     walletNftsLoadedSuffix: "NFT(s) geladen.",
-    walletAmoyKeyMissing: "Amoy erkannt. Bitte in config.js den AMOY_ALCHEMY_KEY eintragen.",
     walletNftsNetworkUnsupported: "NFT-Listing ist aktuell fuer dieses Netzwerk nicht verfuegbar.",
     walletNftsEmpty: "Keine NFTs in dieser Wallet auf dem aktuellen Netzwerk gefunden.",
     walletNftsLoadError: "NFTs konnten nicht geladen werden. Bitte spaeter erneut versuchen.",
@@ -359,7 +343,6 @@ const translations = {
     walletNftsPrompt: "Connect your wallet first to load NFTs.",
     walletNftsLoading: "Loading wallet NFTs...",
     walletNftsLoadedSuffix: "NFT(s) loaded.",
-    walletAmoyKeyMissing: "Amoy detected. Please set AMOY_ALCHEMY_KEY in config.js.",
     walletNftsNetworkUnsupported: "NFT listing is currently not available for this network.",
     walletNftsEmpty: "No NFTs found in this wallet on the current network.",
     walletNftsLoadError: "Could not load NFTs. Please try again later.",
