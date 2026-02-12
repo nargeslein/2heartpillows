@@ -11,15 +11,262 @@ const storyText = document.getElementById("story-text");
 const galleryImages = document.querySelectorAll(".gallery-grid img[data-story-id]");
 const navToggle = document.getElementById("nav-toggle");
 const navLinks = document.querySelector(".nav-links");
-const contactForm = document.getElementById("contact-form");
-const turnstileContainer = document.getElementById("turnstile-container");
-const contactStatus = document.getElementById("contact-status");
+const walletConnectBtn = document.getElementById("wallet-connect");
+const walletSwitchAmoyBtn = document.getElementById("wallet-switch-amoy");
+const walletStatus = document.getElementById("wallet-status");
+const walletNftGrid = document.getElementById("wallet-nft-grid");
+const walletNftInfo = document.getElementById("wallet-nft-info");
+const walletCard = document.querySelector(".wallet-card");
 const langKey = "twoheartpillows_lang_v1";
 let currentLang = "de";
 let activeStoryId = "";
 let activeGalleryIndex = -1;
-const pageLoadedAt = Date.now();
-let turnstileWidgetId = null;
+const polygonAmoyHex = "0x13882";
+let walletManuallyDisconnected = false;
+let walletUiConnected = false;
+
+function setWalletConnectButton(connected) {
+  if (!walletConnectBtn) return;
+  walletConnectBtn.textContent = connected ? t("walletDisconnect") : t("walletConnect");
+}
+
+function shortAddress(address) {
+  if (!address || address.length < 10) return address || "";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function getChainLabel(chainIdHex) {
+  if (!chainIdHex) return t("walletUnknownNetwork");
+  if (chainIdHex === "0x89") return "Polygon Mainnet";
+  if (chainIdHex === polygonAmoyHex) return "Polygon Amoy";
+  return `Chain ${parseInt(chainIdHex, 16)}`;
+}
+
+function getReservoirBaseUrl(chainIdHex) {
+  if (chainIdHex === "0x1") return "https://api.reservoir.tools";
+  if (chainIdHex === "0x89") return "https://api-polygon.reservoir.tools";
+  return "";
+}
+
+function getAmoyAlchemyKey() {
+  const fromConfig = window.APP_CONFIG && typeof window.APP_CONFIG.AMOY_ALCHEMY_KEY === "string"
+    ? window.APP_CONFIG.AMOY_ALCHEMY_KEY.trim()
+    : "";
+  if (fromConfig) return fromConfig;
+  if (!walletCard) return "";
+  return (walletCard.getAttribute("data-amoy-alchemy-key") || "").trim();
+}
+
+function normalizeAlchemyNfts(items) {
+  return items.map((nft) => {
+    const token = nft || {};
+    const imageCandidate = token.image && (token.image.cachedUrl || token.image.pngUrl || token.image.originalUrl);
+    const collectionName = token.contract && token.contract.name ? token.contract.name : "";
+    return {
+      token: {
+        image: imageCandidate || "",
+        name: token.name || "",
+        tokenId: token.tokenId || "",
+        collection: { name: collectionName }
+      }
+    };
+  });
+}
+
+function clearWalletNfts(message) {
+  if (walletNftGrid) walletNftGrid.innerHTML = "";
+  if (walletNftInfo && typeof message === "string") {
+    walletNftInfo.textContent = message;
+  } else if (walletNftInfo) {
+    walletNftInfo.textContent = t("walletNftsPrompt");
+  }
+}
+
+function ipfsToHttp(url) {
+  if (!url) return "";
+  if (url.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${url.slice(7)}`;
+  return url;
+}
+
+function renderWalletNfts(items) {
+  if (!walletNftGrid) return;
+  walletNftGrid.innerHTML = "";
+
+  items.forEach((item) => {
+    const token = item && item.token ? item.token : item;
+    const image = ipfsToHttp(token.image || token.imageSmall || "");
+    const name = token.name || `Token #${token.tokenId || ""}`;
+    const collectionName = token.collection ? token.collection.name || "" : "";
+
+    const figure = document.createElement("figure");
+    const img = document.createElement("img");
+    img.src = image || "assets/images/0ABB3191-537D-4B44-A244-2AD033994957.JPG";
+    img.alt = name;
+
+    const meta = document.createElement("figcaption");
+    meta.className = "nft-token-meta";
+    const title = document.createElement("p");
+    title.className = "nft-token-title";
+    title.textContent = name;
+    const sub = document.createElement("p");
+    sub.className = "nft-token-sub";
+    sub.textContent = collectionName || "Unbekannte Kollektion";
+
+    meta.appendChild(title);
+    meta.appendChild(sub);
+    figure.appendChild(img);
+    figure.appendChild(meta);
+    walletNftGrid.appendChild(figure);
+  });
+}
+
+async function loadWalletNfts(account, chainIdHex) {
+  if (!walletNftInfo) return;
+  if (!account) {
+    clearWalletNfts(t("walletNftsPrompt"));
+    return;
+  }
+
+  const baseUrl = getReservoirBaseUrl(chainIdHex);
+
+  walletNftInfo.textContent = t("walletNftsLoading");
+  try {
+    let tokens = [];
+
+    if (chainIdHex === polygonAmoyHex) {
+      const alchemyKey = getAmoyAlchemyKey();
+      if (!alchemyKey) {
+        clearWalletNfts(t("walletAmoyKeyMissing"));
+        return;
+      }
+      const amoyUrl = `https://polygon-amoy.g.alchemy.com/nft/v3/${alchemyKey}/getNFTsForOwner?owner=${account}&withMetadata=true`;
+      const amoyResponse = await fetch(amoyUrl);
+      if (!amoyResponse.ok) throw new Error("Amoy fetch failed");
+      const amoyData = await amoyResponse.json();
+      const ownedNfts = Array.isArray(amoyData.ownedNfts) ? amoyData.ownedNfts : [];
+      tokens = normalizeAlchemyNfts(ownedNfts);
+    } else {
+      if (!baseUrl) {
+        clearWalletNfts(t("walletNftsNetworkUnsupported"));
+        return;
+      }
+      const url = `${baseUrl}/users/${account}/tokens/v10?limit=24&sortBy=acquiredAt`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Reservoir fetch failed");
+      const data = await response.json();
+      tokens = Array.isArray(data.tokens) ? data.tokens : [];
+    }
+
+    if (!tokens.length) {
+      clearWalletNfts(t("walletNftsEmpty"));
+      return;
+    }
+    renderWalletNfts(tokens);
+    walletNftInfo.textContent = `${tokens.length} ${t("walletNftsLoadedSuffix")}`;
+  } catch (_err) {
+    clearWalletNfts(t("walletNftsLoadError"));
+  }
+}
+
+async function updateWalletStatus() {
+  if (!walletStatus) return;
+  if (walletManuallyDisconnected) {
+    walletStatus.textContent = t("walletDisconnected");
+    clearWalletNfts(t("walletNftsPrompt"));
+    walletUiConnected = false;
+    setWalletConnectButton(false);
+    return;
+  }
+  if (!window.ethereum) {
+    walletStatus.textContent = t("walletNoWeb3");
+    clearWalletNfts(t("walletNotDetected"));
+    walletUiConnected = false;
+    setWalletConnectButton(false);
+    return;
+  }
+
+  try {
+    const [account] = await window.ethereum.request({ method: "eth_accounts" });
+    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+    if (!account) {
+      walletStatus.textContent = t("walletDisconnected");
+      clearWalletNfts(t("walletNftsPrompt"));
+      walletUiConnected = false;
+      setWalletConnectButton(false);
+      return;
+    }
+    walletStatus.textContent = `${t("walletConnectedPrefix")}: ${shortAddress(account)} | ${getChainLabel(chainId)}`;
+    walletUiConnected = true;
+    setWalletConnectButton(true);
+    await loadWalletNfts(account, chainId);
+  } catch (_err) {
+    walletStatus.textContent = t("walletStatusReadError");
+    clearWalletNfts(t("walletStatusReadError"));
+    walletUiConnected = false;
+    setWalletConnectButton(false);
+  }
+}
+
+async function connectWallet() {
+  if (!walletStatus) return;
+  if (!window.ethereum) {
+    walletStatus.textContent = t("walletInstallHint");
+    return;
+  }
+  try {
+    walletManuallyDisconnected = false;
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    await updateWalletStatus();
+  } catch (_err) {
+    walletStatus.textContent = t("walletConnectError");
+    walletUiConnected = false;
+    setWalletConnectButton(false);
+  }
+}
+
+function disconnectWalletUi() {
+  walletManuallyDisconnected = true;
+  walletUiConnected = false;
+  if (walletStatus) walletStatus.textContent = t("walletDisconnected");
+  clearWalletNfts(t("walletNftsPrompt"));
+  setWalletConnectButton(false);
+}
+
+async function switchToPolygonAmoy() {
+  if (!walletStatus) return;
+  if (!window.ethereum) {
+    walletStatus.textContent = t("walletSwitchNoWallet");
+    return;
+  }
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: polygonAmoyHex }]
+    });
+    await updateWalletStatus();
+  } catch (err) {
+    if (err && err.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: polygonAmoyHex,
+            chainName: "Polygon Amoy",
+            nativeCurrency: { name: "POL", symbol: "POL", decimals: 18 },
+            rpcUrls: ["https://rpc-amoy.polygon.technology"],
+            blockExplorerUrls: ["https://amoy.polygonscan.com"]
+          }]
+        });
+        await updateWalletStatus();
+        return;
+      } catch (_addErr) {
+        walletStatus.textContent = t("walletAmoyAddError");
+        return;
+      }
+    }
+    walletStatus.textContent = t("walletSwitchError");
+  }
+}
 
 function detectPreferredLanguage() {
   const saved = localStorage.getItem(langKey);
@@ -31,27 +278,6 @@ function detectPreferredLanguage() {
 }
 
 currentLang = detectPreferredLanguage();
-
-function initTurnstileIfConfigured() {
-  if (!contactForm || !turnstileContainer) return;
-  const siteKey = (contactForm.getAttribute("data-turnstile-sitekey") || "").trim();
-  if (!siteKey) return;
-
-  const existing = document.querySelector('script[data-turnstile="true"]');
-  if (existing) return;
-
-  const script = document.createElement("script");
-  script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-  script.async = true;
-  script.defer = true;
-  script.setAttribute("data-turnstile", "true");
-  script.onload = () => {
-    if (window.turnstile && turnstileContainer.childElementCount === 0) {
-      turnstileWidgetId = window.turnstile.render("#turnstile-container", { sitekey: siteKey });
-    }
-  };
-  document.head.appendChild(script);
-}
 
 const translations = {
   de: {
@@ -74,24 +300,31 @@ const translations = {
     instagramBtn: "Zum Instagram-Profil",
     nftTitle: "NFT Bereich",
     nftText: "Ziel: Jede Kissenbesitzerin erhält ein NFT als digitale Erinnerung. Dieser Bereich ist als Start für Erstellung und spätere Ausgabe vorbereitet.",
-    nftStep1Title: "1. NFT-Motive erstellen",
-    nftStep1Text: "Die Herzkissen-Motive werden als digitale Kollektion vorbereitet.",
-    nftStep2Title: "2. Wallet verknüpfen",
-    nftStep2Text: "Optionaler Wallet-Login für spätere Ausgabe.",
-    nftStep3Title: "3. Claim für Besitzerinnen",
-    nftStep3Text: "NFT-Übergabe über einen geschützten Claim-Code.",
-    claimTitle: "Kontakt aufnehmen",
-    claimNameLabel: "Name",
-    claimNamePlaceholder: "Dein Name",
-    claimContactLabel: "Deine E-Mail",
-    claimContactPlaceholder: "beispiel@email.de",
-    claimMessageLabel: "Nachricht",
-    claimMessagePlaceholder: "Ich möchte das Projekt unterstützen...",
-    claimBtn: "E-Mail senden",
-    contactSending: "Nachricht wird gesendet...",
-    contactSuccess: "Danke. Deine Nachricht wurde gesendet.",
-    contactError: "Senden fehlgeschlagen. Bitte später erneut versuchen.",
-    contactBotBlocked: "Anfrage blockiert.",
+    walletTitle: "Wallet",
+    walletIntro: "Verbinde deine Wallet, um den NFT-Bereich zu nutzen.",
+    walletHint: "Hinweis: Funktioniert nur in Browsern mit Wallet (z.B. MetaMask Extension oder MetaMask In-App Browser).",
+    walletConnect: "Wallet verbinden",
+    walletDisconnect: "Verbindung trennen",
+    walletSwitchAmoy: "Zu Polygon Amoy",
+    walletDisconnected: "Nicht verbunden",
+    walletConnectedPrefix: "Wallet verbunden",
+    walletNftsTitle: "Wallet NFTs",
+    walletNftsPrompt: "Verbinde zuerst deine Wallet, um NFTs zu laden.",
+    walletNftsLoading: "Lade Wallet NFTs...",
+    walletNftsLoadedSuffix: "NFT(s) geladen.",
+    walletAmoyKeyMissing: "Amoy erkannt. Bitte in config.js den AMOY_ALCHEMY_KEY eintragen.",
+    walletNftsNetworkUnsupported: "NFT-Listing ist aktuell fuer dieses Netzwerk nicht verfuegbar.",
+    walletNftsEmpty: "Keine NFTs in dieser Wallet auf dem aktuellen Netzwerk gefunden.",
+    walletNftsLoadError: "NFTs konnten nicht geladen werden. Bitte spaeter erneut versuchen.",
+    walletNoWeb3: "Keine Web3 Wallet gefunden (z.B. MetaMask).",
+    walletNotDetected: "Keine Wallet erkannt.",
+    walletStatusReadError: "Wallet-Status konnte nicht gelesen werden.",
+    walletInstallHint: "Keine Wallet erkannt. Bitte MetaMask installieren oder den MetaMask In-App Browser nutzen.",
+    walletConnectError: "Verbindung abgebrochen oder fehlgeschlagen.",
+    walletSwitchNoWallet: "Keine Wallet erkannt. Netzwerkwechsel nicht moeglich.",
+    walletAmoyAddError: "Polygon Amoy konnte nicht hinzugefuegt werden.",
+    walletSwitchError: "Netzwerkwechsel fehlgeschlagen.",
+    walletUnknownNetwork: "Unbekanntes Netzwerk",
     footerText: "2heartpillows | Für Hoffnung, Solidarität und Mitgefühl."
   },
   en: {
@@ -114,24 +347,31 @@ const translations = {
     instagramBtn: "Open Instagram Profile",
     nftTitle: "NFT Section",
     nftText: "Goal: every pillow owner receives an NFT as a digital memory. This section is prepared as a starting point for creation and later distribution.",
-    nftStep1Title: "1. Create NFT artworks",
-    nftStep1Text: "Heart pillow motifs are prepared as a digital collection.",
-    nftStep2Title: "2. Connect wallet",
-    nftStep2Text: "Optional wallet login for later distribution.",
-    nftStep3Title: "3. Claim for owners",
-    nftStep3Text: "NFT handover via a protected claim code.",
-    claimTitle: "Get in Touch",
-    claimNameLabel: "Name",
-    claimNamePlaceholder: "Your name",
-    claimContactLabel: "Your Email",
-    claimContactPlaceholder: "name@example.com",
-    claimMessageLabel: "Message",
-    claimMessagePlaceholder: "I would like to support the project...",
-    claimBtn: "Send Email",
-    contactSending: "Sending message...",
-    contactSuccess: "Thank you. Your message was sent.",
-    contactError: "Sending failed. Please try again later.",
-    contactBotBlocked: "Request blocked.",
+    walletTitle: "Wallet",
+    walletIntro: "Connect your wallet to use the NFT section.",
+    walletHint: "Works only in browsers with a wallet (e.g. MetaMask extension or MetaMask in-app browser).",
+    walletConnect: "Connect wallet",
+    walletDisconnect: "Disconnect",
+    walletSwitchAmoy: "Switch to Polygon Amoy",
+    walletDisconnected: "Not connected",
+    walletConnectedPrefix: "Wallet connected",
+    walletNftsTitle: "Wallet NFTs",
+    walletNftsPrompt: "Connect your wallet first to load NFTs.",
+    walletNftsLoading: "Loading wallet NFTs...",
+    walletNftsLoadedSuffix: "NFT(s) loaded.",
+    walletAmoyKeyMissing: "Amoy detected. Please set AMOY_ALCHEMY_KEY in config.js.",
+    walletNftsNetworkUnsupported: "NFT listing is currently not available for this network.",
+    walletNftsEmpty: "No NFTs found in this wallet on the current network.",
+    walletNftsLoadError: "Could not load NFTs. Please try again later.",
+    walletNoWeb3: "No Web3 wallet found (e.g. MetaMask).",
+    walletNotDetected: "No wallet detected.",
+    walletStatusReadError: "Could not read wallet status.",
+    walletInstallHint: "No wallet detected. Please install MetaMask or use the MetaMask in-app browser.",
+    walletConnectError: "Connection canceled or failed.",
+    walletSwitchNoWallet: "No wallet detected. Cannot switch network.",
+    walletAmoyAddError: "Could not add Polygon Amoy.",
+    walletSwitchError: "Network switch failed.",
+    walletUnknownNetwork: "Unknown network",
     footerText: "2heartpillows | For hope, solidarity, and compassion."
   }
 };
@@ -291,6 +531,7 @@ function applyLanguage(lang) {
   if (descriptionMeta) descriptionMeta.setAttribute("content", t("pageDescription"));
 
   document.querySelectorAll("[data-i18n]").forEach((element) => {
+    if (element.id === "wallet-status" || element.id === "wallet-nft-info") return;
     const key = element.getAttribute("data-i18n");
     if (!key) return;
     element.innerHTML = t(key);
@@ -320,6 +561,8 @@ function applyLanguage(lang) {
       storyText.textContent = story.text;
     }
   }
+  setWalletConnectButton(walletUiConnected);
+  updateWalletStatus();
 }
 
 if (langDeBtn && langEnBtn) {
@@ -383,45 +626,25 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") renderStoryByIndex(activeGalleryIndex + 1);
 });
 
-if (contactForm) {
-  contactForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (contactForm.getAttribute("data-form-enabled") !== "true") return;
-    const honeypot = (document.getElementById("claim-company") || { value: "" }).value.trim();
-    if (honeypot) {
-      if (contactStatus) contactStatus.textContent = t("contactBotBlocked");
+if (walletConnectBtn) {
+  walletConnectBtn.addEventListener("click", async () => {
+    if (walletConnectBtn.textContent === t("walletDisconnect")) {
+      disconnectWalletUi();
       return;
     }
-    if (Date.now() - pageLoadedAt < 2500) {
-      if (contactStatus) contactStatus.textContent = t("contactBotBlocked");
-      return;
-    }
-
-    const name = (document.getElementById("claim-name") || { value: "" }).value.trim();
-    const email = (document.getElementById("claim-contact") || { value: "" }).value.trim();
-    const message = (document.getElementById("claim-message") || { value: "" }).value.trim();
-    const turnstileToken = window.turnstile && turnstileWidgetId !== null
-      ? window.turnstile.getResponse(turnstileWidgetId)
-      : "";
-
-    if (contactStatus) contactStatus.textContent = t("contactSending");
-
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message, turnstileToken })
-      });
-
-      if (!response.ok) throw new Error("Request failed");
-      if (contactStatus) contactStatus.textContent = t("contactSuccess");
-      contactForm.reset();
-      if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
-    } catch (_err) {
-      if (contactStatus) contactStatus.textContent = t("contactError");
-    }
+    await connectWallet();
   });
 }
 
+if (walletSwitchAmoyBtn) {
+  walletSwitchAmoyBtn.addEventListener("click", switchToPolygonAmoy);
+}
+
+if (window.ethereum) {
+  window.ethereum.on("accountsChanged", () => updateWalletStatus());
+  window.ethereum.on("chainChanged", () => updateWalletStatus());
+}
+
 applyLanguage(currentLang);
-initTurnstileIfConfigured();
+setWalletConnectButton(false);
+updateWalletStatus();
