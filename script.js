@@ -2,6 +2,9 @@ const langDeBtn = document.getElementById("lang-de");
 const langEnBtn = document.getElementById("lang-en");
 const storyModal = document.getElementById("story-modal");
 const storyCloseBtn = document.getElementById("story-close");
+const storyPrevBtn = document.getElementById("story-prev");
+const storyNextBtn = document.getElementById("story-next");
+const storyCounter = document.getElementById("story-counter");
 const storyImage = document.getElementById("story-image");
 const storyTitle = document.getElementById("story-title");
 const storyText = document.getElementById("story-text");
@@ -12,10 +15,22 @@ const contactForm = document.getElementById("contact-form");
 const turnstileContainer = document.getElementById("turnstile-container");
 const contactStatus = document.getElementById("contact-status");
 const langKey = "twoheartpillows_lang_v1";
-let currentLang = localStorage.getItem(langKey) || "de";
+let currentLang = "de";
 let activeStoryId = "";
+let activeGalleryIndex = -1;
 const pageLoadedAt = Date.now();
 let turnstileWidgetId = null;
+
+function detectPreferredLanguage() {
+  const saved = localStorage.getItem(langKey);
+  if (saved === "de" || saved === "en") return saved;
+
+  const browserLang = String(navigator.language || navigator.userLanguage || "").toLowerCase();
+  if (browserLang.startsWith("de")) return "de";
+  return "en";
+}
+
+currentLang = detectPreferredLanguage();
 
 function initTurnstileIfConfigured() {
   if (!contactForm || !turnstileContainer) return;
@@ -232,18 +247,28 @@ function getStory(storyId) {
   return (stories[currentLang] && stories[currentLang][storyId]) || (stories.de && stories.de[storyId]) || null;
 }
 
-function openStoryModal(imageElement) {
-  if (!storyModal || !storyImage || !storyTitle || !storyText) return;
+function renderStoryByIndex(index) {
+  if (!galleryImages.length || !storyImage || !storyTitle || !storyText) return;
+  const safeIndex = (index + galleryImages.length) % galleryImages.length;
+  const imageElement = galleryImages[safeIndex];
   const storyId = imageElement.getAttribute("data-story-id");
   if (!storyId) return;
   const story = getStory(storyId);
   if (!story) return;
 
+  activeGalleryIndex = safeIndex;
   activeStoryId = storyId;
   storyImage.src = imageElement.src;
   storyImage.alt = imageElement.alt;
   storyTitle.textContent = story.title;
   storyText.textContent = story.text;
+  if (storyCounter) storyCounter.textContent = `${safeIndex + 1} / ${galleryImages.length}`;
+}
+
+function openStoryModal(imageElement) {
+  if (!storyModal || !storyImage || !storyTitle || !storyText) return;
+  const clickedIndex = Array.from(galleryImages).indexOf(imageElement);
+  renderStoryByIndex(clickedIndex >= 0 ? clickedIndex : 0);
   storyModal.classList.add("open");
   storyModal.setAttribute("aria-hidden", "false");
 }
@@ -253,6 +278,8 @@ function closeStoryModal() {
   storyModal.classList.remove("open");
   storyModal.setAttribute("aria-hidden", "true");
   activeStoryId = "";
+  activeGalleryIndex = -1;
+  if (storyCounter) storyCounter.textContent = "";
 }
 
 function applyLanguage(lang) {
@@ -329,6 +356,20 @@ if (storyCloseBtn) {
   storyCloseBtn.addEventListener("click", closeStoryModal);
 }
 
+if (storyPrevBtn) {
+  storyPrevBtn.addEventListener("click", () => {
+    if (!storyModal || !storyModal.classList.contains("open")) return;
+    renderStoryByIndex(activeGalleryIndex - 1);
+  });
+}
+
+if (storyNextBtn) {
+  storyNextBtn.addEventListener("click", () => {
+    if (!storyModal || !storyModal.classList.contains("open")) return;
+    renderStoryByIndex(activeGalleryIndex + 1);
+  });
+}
+
 if (storyModal) {
   storyModal.addEventListener("click", (event) => {
     if (event.target === storyModal) closeStoryModal();
@@ -336,7 +377,10 @@ if (storyModal) {
 }
 
 document.addEventListener("keydown", (event) => {
+  if (!storyModal || !storyModal.classList.contains("open")) return;
   if (event.key === "Escape") closeStoryModal();
+  if (event.key === "ArrowLeft") renderStoryByIndex(activeGalleryIndex - 1);
+  if (event.key === "ArrowRight") renderStoryByIndex(activeGalleryIndex + 1);
 });
 
 if (contactForm) {

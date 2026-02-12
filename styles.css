@@ -222,10 +222,20 @@ h2 {
 
 .section-head {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
   align-items: baseline;
   flex-wrap: wrap;
+}
+
+.section-head p {
+  margin: 0;
+}
+
+.galerie .section-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
 }
 
 .gallery-grid {
@@ -333,6 +343,48 @@ textarea {
   color: var(--muted);
 }
 
+.legal-links {
+  margin: 0.45rem 0 0;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.legal-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.social-links {
+  margin-top: 0.45rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.social-link {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.social-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+}
+
 .story-modal {
   position: fixed;
   inset: 0;
@@ -359,6 +411,30 @@ textarea {
   padding: 1rem;
 }
 
+.story-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid #d8bdb1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #5a4f49;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.story-prev {
+  left: 0.7rem;
+}
+
+.story-next {
+  right: 0.7rem;
+}
+
 .story-close {
   position: absolute;
   top: 0.6rem;
@@ -371,6 +447,14 @@ textarea {
   color: #5a4f49;
   font-weight: 700;
   cursor: pointer;
+}
+
+.story-counter {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  color: #7a6d66;
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
 #story-image {
@@ -448,6 +532,12 @@ textarea {
     max-height: 95vh;
     padding: 0.8rem;
     border-radius: 12px;
+  }
+
+  .story-nav {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
   }
 }
 

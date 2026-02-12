@@ -36,8 +36,7 @@
       <div class="nav-links">
         <a href="#mission" data-i18n="navMission">Mission</a>
         <a href="#galerie" data-i18n="navGallery">Galerie</a>
-        <a href="#instagram">Instagram</a>
-        <a href="#nft">NFT</a>
+        <a href="nft.html">NFT</a>
       </div>
       <div class="lang-switch" aria-label="Language switcher">
         <button id="lang-de" class="lang-btn active" type="button">DE</button>
@@ -118,62 +117,34 @@
       </div>
     </section>
 
-    <section class="section instagram" id="instagram">
-      <div class="section-head">
-        <h2>Instagram</h2>
-        <p>@2heartpillows</p>
-      </div>
-      <a class="btn primary" href="https://www.instagram.com/2heartpillows/" target="_blank"
-        rel="noopener noreferrer" data-i18n="instagramBtn">Zum Instagram-Profil</a>
-    </section>
-
-    <section class="section nft" id="nft">
-      <h2 data-i18n="nftTitle">NFT Bereich</h2>
-      <p data-i18n="nftText">
-        Ziel: Jede Kissenbesitzerin erhält ein NFT als digitale Erinnerung. Dieser Bereich ist als Start für Erstellung
-        und spätere Ausgabe vorbereitet.
-      </p>
-      <div class="nft-grid">
-        <div class="card">
-          <h3 data-i18n="nftStep1Title">1. NFT-Motive erstellen</h3>
-          <p data-i18n="nftStep1Text">Die Herzkissen-Motive werden als digitale Kollektion vorbereitet.</p>
-        </div>
-        <div class="card">
-          <h3 data-i18n="nftStep2Title">2. Wallet verknüpfen</h3>
-          <p data-i18n="nftStep2Text">Optionaler Wallet-Login für spätere Ausgabe.</p>
-        </div>
-        <div class="card">
-          <h3 data-i18n="nftStep3Title">3. Claim für Besitzerinnen</h3>
-          <p data-i18n="nftStep3Text">NFT-Übergabe über einen geschützten Claim-Code.</p>
-        </div>
-      </div>
-      <form id="contact-form" class="claim-form" data-contact-email="kontakt@2heartpillows.de" data-turnstile-sitekey="" data-form-enabled="false">
-        <h3 data-i18n="claimTitle">Kontakt aufnehmen</h3>
-        <label for="claim-name" data-i18n="claimNameLabel">Name</label>
-        <input id="claim-name" type="text" placeholder="Dein Name" data-i18n-placeholder="claimNamePlaceholder" disabled>
-        <label for="claim-contact" data-i18n="claimContactLabel">Deine E-Mail</label>
-        <input id="claim-contact" type="text" placeholder="beispiel@email.de" data-i18n-placeholder="claimContactPlaceholder" disabled>
-        <div class="hp-field" aria-hidden="true">
-          <label for="claim-company">Company</label>
-          <input id="claim-company" type="text" tabindex="-1" autocomplete="off" disabled>
-        </div>
-        <label for="claim-message" data-i18n="claimMessageLabel">Nachricht</label>
-        <textarea id="claim-message" rows="8" placeholder="Ich möchte das Projekt unterstützen..." data-i18n-placeholder="claimMessagePlaceholder" disabled></textarea>
-        <div id="turnstile-container"></div>
-        <button type="submit" class="btn primary" data-i18n="claimBtn" disabled>E-Mail senden</button>
-        <p class="note">Kontaktformular ist vorübergehend deaktiviert. Es geht morgen weiter.</p>
-        <p id="contact-status" class="note" aria-live="polite"></p>
-      </form>
+    <section class="section">
+      <h2>NFT</h2>
+      <a class="btn primary" href="nft.html">Zum NFT-Bereich</a>
     </section>
   </main>
 
   <footer class="footer">
     <p data-i18n="footerText">2heartpillows | Für Hoffnung, Solidarität und Mitgefühl.</p>
+    <p class="legal-links">
+      <a href="impressum.html">Impressum</a>
+      <a href="datenschutz.html">Datenschutz</a>
+    </p>
+    <div class="social-links">
+      <a class="social-link" href="https://www.instagram.com/2heartpillows/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+        <span class="social-icon" aria-hidden="true">&#128247;</span> Instagram
+      </a>
+      <a class="social-link" href="https://www.facebook.com/2heartpillows" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+        <span class="social-icon" aria-hidden="true">&#102;</span> Facebook
+      </a>
+    </div>
   </footer>
 
   <div id="story-modal" class="story-modal" aria-hidden="true">
     <div class="story-modal-content">
+      <button id="story-prev" class="story-nav story-prev" type="button" aria-label="Vorheriges Bild">&#10094;</button>
+      <button id="story-next" class="story-nav story-next" type="button" aria-label="Nächstes Bild">&#10095;</button>
       <button id="story-close" class="story-close" type="button" aria-label="Close story">x</button>
+      <p id="story-counter" class="story-counter" aria-live="polite"></p>
       <img id="story-image" src="" alt="">
       <h3 id="story-title"></h3>
       <p id="story-text"></p>
